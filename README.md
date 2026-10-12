@@ -1,117 +1,76 @@
 # Corizo Store
 
-A simple e-commerce website built with HTML, Bootstrap, Node.js, Express and MongoDB.
+**Live website:** https://corizo-store.onrender.com
+
+Corizo Store is a full-stack e-commerce website for electronics: phones, laptops,
+tablets, wearables and accessories. Customers can browse products, manage a
+shopping cart and place cash-on-delivery orders. Store administrators manage
+products, stock, orders and customers from a dashboard.
+
+> The site is hosted on Render's free plan. If it has been idle, the first page
+> load can take up to a minute while the server wakes up.
 
 ## Features
 
-- Browse, search and filter products
-- Register, log in and log out (session based)
-- Shopping cart with stock checks
-- Cash-on-delivery checkout and order history
-- Admin dashboard: manage products, update order status, view customers
+### For customers
+- Browse the product catalogue with live search and category filters
+- Create an account, log in and log out securely
+- Add products to the cart, change quantities and remove items
+- See stock availability and cart totals update instantly
+- Check out with a shipping address and pay by cash on delivery
+- View order history with order status and payment status
 
-## Setup
+### For administrators
+- Dashboard with active products, total orders, orders to process and revenue
+- Add, edit, hide and restore products
+- Upload product images straight from the dashboard
+- Update order status (Pending → Confirmed → Shipped → Delivered, or Cancelled)
+- Stock is returned automatically when an order is cancelled
+- View all registered customers
 
-1. Install dependencies:
+### Security
+- Passwords are hashed with bcrypt and never stored in plain text
+- Login sessions are stored in the database with secure, HTTP-only cookies
+- Admin pages and actions are protected on the server
+- Prices and stock are always checked on the server, never trusted from the browser
 
-   ```
-   npm install
-   ```
+## Tools and technologies
 
-2. Create a `.env` file in the project folder:
-
-   ```
-   MONGO_URI=your-mongodb-connection-string
-   SESSION_SECRET=a-long-random-string
-   PORT=5000
-   NODE_ENV=development
-   ADMIN_EMAIL=admin@example.com
-   ADMIN_PASSWORD=at-least-12-characters
-   CLOUDINARY_CLOUD_NAME=your-cloud-name
-   CLOUDINARY_API_KEY=your-api-key
-   CLOUDINARY_API_SECRET=your-api-secret
-   ```
-
-   The Cloudinary keys are needed for product image uploads in the admin panel.
-   Get them free at https://cloudinary.com (Dashboard → API Keys).
-
-3. Create the admin account (run once):
-
-   ```
-   npm run create-admin
-   ```
-
-4. Add sample products (optional, only runs when the store is empty):
-
-   ```
-   npm run seed
-   ```
-
-5. Start the server:
-
-   ```
-   npm run dev
-   ```
-
-   Then open http://localhost:5000
-
-## Testing
-
-```
-npm test
-```
-
-Runs the whole shopping flow (register, login, cart, checkout, admin order
-management) against a temporary database that is deleted afterwards.
-
-## Deploying on Render
-
-1. In MongoDB Atlas, go to **Network Access** and allow `0.0.0.0/0`
-   (Render does not use a fixed IP address).
-2. Push this project to GitHub.
-3. On https://render.com choose **New → Blueprint**, pick the repository,
-   and Render reads `render.yaml`.
-4. Fill in `MONGO_URI` and the three `CLOUDINARY_` values when asked.
-   `SESSION_SECRET` is generated automatically.
-5. After the first deploy, create the admin account by running this on your
-   computer (it uses the same database):
-
-   ```
-   npm run create-admin
-   ```
-
-The free plan sleeps after 15 minutes without visitors, so the first page
-load after a break can take up to a minute.
+| Area | Tools |
+|---|---|
+| Frontend | HTML5, CSS3, JavaScript, Bootstrap 5 |
+| Backend | Node.js, Express.js |
+| Database | MongoDB Atlas, Mongoose |
+| Authentication | express-session, connect-mongo, bcryptjs |
+| Image uploads | Cloudinary, Multer |
+| Testing | Automated end-to-end test of the full shopping flow (Node.js) |
+| Version control | Git, GitHub |
+| Hosting | Render |
+| Code editor | Visual Studio Code |
 
 ## Pages
 
-| Page | Purpose |
+| Page | Description |
 |---|---|
-| `index.html` | Home page and product list |
-| `login.html` / `register.html` | Customer accounts |
-| `cart.html` | View and edit the cart |
-| `checkout.html` | Enter address and place a COD order |
-| `myorders.html` | Customer order history |
-| `admin.html` | Admin dashboard |
+| Home | Product catalogue with search and filters |
+| Register / Log in | Customer accounts |
+| Cart | Review items, change quantities and see totals |
+| Checkout | Shipping details and cash-on-delivery order |
+| My orders | Order history and status tracking |
+| Admin dashboard | Manage products, orders and customers |
 
-## API
+## Project structure
 
-| Method | Endpoint | Access |
-|---|---|---|
-| POST | `/api/auth/register` | Public |
-| POST | `/api/auth/login` | Public |
-| POST | `/api/auth/logout` | Public |
-| GET | `/api/auth/me` | Public |
-| GET | `/api/products` | Public |
-| GET | `/api/products/:id` | Public |
-| GET | `/api/products/admin/all` | Admin |
-| POST / PATCH / DELETE | `/api/products`, `/api/products/:id` | Admin |
-| GET | `/api/cart` | Logged in |
-| POST | `/api/cart/items` | Logged in |
-| PATCH / DELETE | `/api/cart/items/:productId` | Logged in |
-| POST | `/api/orders/checkout` | Logged in |
-| GET | `/api/orders/my-orders` | Logged in |
-| GET | `/api/orders/admin/all` | Admin |
-| PATCH | `/api/orders/admin/:id/status` | Admin |
-| GET | `/api/orders/admin/customers` | Admin |
-| POST | `/api/uploads/image` | Admin |
+```
+├── models/        Database schemas (User, Product, Order)
+├── routes/        API routes (auth, products, cart, orders, uploads)
+├── middleware/    Login and admin access checks
+├── public/        Website pages, styles, scripts and product images
+├── test/          End-to-end shopping flow test
+├── server.js      Express server
+└── seed.js        Loads the starting product catalogue
+```
+
+---
+
+Student e-commerce project.
