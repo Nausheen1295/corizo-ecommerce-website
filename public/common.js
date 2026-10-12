@@ -1,4 +1,4 @@
-// Shared helpers used by every Corizo Store page.
+// Shared helpers used by every Tech World page.
 // Each page needs <nav id="siteNav"> and <div id="statusMessage"> in its HTML.
 
 const CURRENCY = "₹";
@@ -122,7 +122,7 @@ function renderNavbar() {
   nav.className = "navbar sticky-top";
   nav.innerHTML = `
     <div class="container py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
-      <a class="brand" href="/">Corizo Store</a>
+      <a class="brand" href="/">Tech World</a>
       <div class="d-flex flex-wrap gap-2 align-items-center">
         <a href="/#products" class="btn btn-light">Shop</a>
         ${links}

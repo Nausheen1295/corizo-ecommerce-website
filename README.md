@@ -1,8 +1,8 @@
-# Corizo Store
+# Tech World
 
 **Live website:** https://corizo-store.onrender.com
 
-Corizo Store is a full-stack e-commerce website for electronics: phones, laptops,
+Tech World is a full-stack e-commerce website for electronics: phones, laptops,
 tablets, wearables and accessories. Customers can browse products, manage a
 shopping cart and place cash-on-delivery orders. Store administrators manage
 products, stock, orders and customers from a dashboard.
