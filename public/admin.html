@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin | Corizo Store</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/style.css" rel="stylesheet">
+</head>
+<body>
+  <nav id="siteNav" class="navbar"></nav>
+
+  <main class="container py-4 py-lg-5">
+    <h1 class="section-title mb-4">Admin dashboard</h1>
+
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="panel">
+          <div class="text-secondary small">Active products</div>
+          <div id="statProducts" class="stat-value">–</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="panel">
+          <div class="text-secondary small">Total orders</div>
+          <div id="statOrders" class="stat-value">–</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="panel">
+          <div class="text-secondary small">Orders to process</div>
+          <div id="statPending" class="stat-value">–</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="panel">
+          <div class="text-secondary small">Revenue (delivered)</div>
+          <div id="statRevenue" class="stat-value">–</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="statusMessage" class="alert" role="status"></div>
+
+    <div class="d-flex gap-2 mb-3" role="tablist">
+      <button class="btn btn-brand" data-tab="products">Products</button>
+      <button class="btn btn-light" data-tab="orders">Orders</button>
+      <button class="btn btn-light" data-tab="customers">Customers</button>
+    </div>
+
+    <!-- Products -->
+    <section id="tab-products">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <form id="productForm" class="panel" novalidate>
+            <h2 id="formTitle" class="h5 fw-bold mb-3">Add a product</h2>
+            <input type="hidden" id="productId">
+
+            <div class="mb-3">
+              <label for="name" class="form-label">Name</label>
+              <input id="name" class="form-control" maxlength="150" required>
+            </div>
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea id="description" class="form-control" rows="3" maxlength="3000" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="category" class="form-label">Category</label>
+              <input id="category" class="form-control" list="categoryOptions" required>
+              <datalist id="categoryOptions"></datalist>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label for="price" class="form-label">Price (₹)</label>
+                <input id="price" type="number" class="form-control" min="0" step="0.01" required>
+              </div>
+              <div class="col-6">
+                <label for="stock" class="form-label">Stock</label>
+                <input id="stock" type="number" class="form-control" min="0" step="1" value="0" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="imageFile" class="form-label">
+                Image <span class="text-secondary">(optional)</span>
+              </label>
+              <img id="imagePreview" src="" alt="Product image preview"
+                   class="product-image rounded mb-2 d-none">
+              <input id="imageFile" type="file" class="form-control"
+                     accept="image/jpeg,image/png,image/webp,image/gif">
+              <div id="uploadStatus" class="form-text">JPG, PNG, WebP or GIF, up to 5 MB.</div>
+              <input id="imageUrl" class="form-control form-control-sm mt-2"
+                     placeholder="...or paste an image link (https://...)"
+                     aria-label="Image URL">
+            </div>
+            <div id="activeField" class="form-check mb-3 d-none">
+              <input id="isActive" class="form-check-input" type="checkbox">
+              <label for="isActive" class="form-check-label">Visible in the store</label>
+            </div>
+
+            <button id="saveProductButton" type="submit" class="btn btn-brand w-100">Add product</button>
+            <button id="cancelEditButton" type="button" class="btn btn-light w-100 mt-2 d-none">
+              Cancel editing
+            </button>
+          </form>
+        </div>
+
+        <div class="col-lg-8">
+          <div class="panel table-responsive">
+            <table class="table admin-table mb-0">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="productRows">
+                <tr><td colspan="5">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Orders -->
+    <section id="tab-orders" class="d-none">
+      <div class="panel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+          <h2 class="h5 fw-bold mb-0">Orders</h2>
+          <select id="orderFilter" class="form-select w-auto" aria-label="Filter orders by status">
+            <option value="">All statuses</option>
+            <option>Pending</option>
+            <option>Confirmed</option>
+            <option>Shipped</option>
+            <option>Delivered</option>
+            <option>Cancelled</option>
+          </select>
+        </div>
+        <div class="table-responsive">
+          <table class="table admin-table mb-0">
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Ship to</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="orderRows">
+              <tr><td colspan="6">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Customers -->
+    <section id="tab-customers" class="d-none">
+      <div class="panel table-responsive">
+        <table class="table admin-table mb-0">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Joined</th>
+            </tr>
+          </thead>
+          <tbody id="customerRows">
+            <tr><td colspan="4">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="py-4 mt-5">
+    <div class="container d-flex flex-wrap justify-content-between gap-2">
+      <span><strong>Corizo Store</strong> — Student e-commerce project</span>
+      <span>Built with HTML, Bootstrap, Node.js and MongoDB</span>
+    </div>
+  </footer>
+
+  <script src="/common.js"></script>
+  <script>
+    const STATUSES = ["Pending", "Confirmed", "Shipped", "Delivered", "Cancelled"];
+    const FINAL_STATUSES = ["Delivered", "Cancelled"];
+
+    let products = [];
+    let orders = [];
+
+    const productForm = document.getElementById("productForm");
+    const productRows = document.getElementById("productRows");
+    const orderRows = document.getElementById("orderRows");
+    const orderFilter = document.getElementById("orderFilter");
+
+    // ---------- Tabs ----------
+
+    document.querySelectorAll("[data-tab]").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll("[data-tab]").forEach(other => {
+          const active = other === button;
+          other.classList.toggle("btn-brand", active);
+          other.classList.toggle("btn-light", !active);
+          document.getElementById("tab-" + other.dataset.tab)
+            .classList.toggle("d-none", !active);
+        });
+        hideMessage();
+      });
+    });
+
+    // ---------- Stats ----------
+
+    function renderStats() {
+      document.getElementById("statProducts").textContent =
+        products.filter(p => p.isActive).length;
+      document.getElementById("statOrders").textContent = orders.length;
+      document.getElementById("statPending").textContent =
+        orders.filter(o => !FINAL_STATUSES.includes(o.status)).length;
+      document.getElementById("statRevenue").textContent = formatPrice(
+        orders
+          .filter(o => o.status === "Delivered")
+          .reduce((sum, o) => sum + o.totalAmount, 0)
+      );
+    }
+
+    // ---------- Products ----------
+
+    function renderProducts() {
+      const categories = [...new Set(products.map(p => p.category))].sort();
+      document.getElementById("categoryOptions").innerHTML = categories
+        .map(c => `<option value="${escapeHtml(c)}">`).join("");
+
+      if (!products.length) {
+        productRows.innerHTML =
+          '<tr><td colspan="5" class="text-secondary">No products yet. Add your first one!</td></tr>';
+        return;
+      }
+
+      productRows.innerHTML = products.map(product => {
+        const image = product.imageUrl || "https://placehold.co/600x600?text=Product";
+        const id = escapeHtml(product._id);
+
+        return `
+          <tr class="${product.isActive ? "" : "opacity-50"}">
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <img src="${escapeHtml(image)}" alt="" class="cart-thumb">
+                <div>
+                  <div class="fw-bold">${escapeHtml(product.name)}</div>
+                  <div class="text-secondary small">${escapeHtml(product.category)}</div>
+                </div>
+              </div>
+            </td>
+            <td class="text-nowrap">${formatPrice(product.price)}</td>
+            <td class="${product.stock === 0 ? "text-danger fw-bold" : ""}">${product.stock}</td>
+            <td>
+              ${product.isActive
+                ? '<span class="badge text-bg-success">Active</span>'
+                : '<span class="badge text-bg-secondary">Hidden</span>'}
+            </td>
+            <td class="text-end text-nowrap">
+              <button class="btn btn-sm btn-light" data-edit="${id}">Edit</button>
+              ${product.isActive
+                ? `<button class="btn btn-sm btn-outline-danger" data-deactivate="${id}">Hide</button>`
+                : `<button class="btn btn-sm btn-outline-success" data-activate="${id}">Show</button>`}
+            </td>
+          </tr>`;
+      }).join("");
+    }
+
+    async function loadProducts() {
+      try {
+        products = await api("/api/products/admin/all");
+        renderProducts();
+        renderStats();
+      } catch (error) {
+        productRows.innerHTML = "";
+        showMessage("Could not load products: " + error.message, "danger");
+      }
+    }
+
+    // ---------- Image upload ----------
+
+    const imageFile = document.getElementById("imageFile");
+    const imageUrlInput = document.getElementById("imageUrl");
+    const imagePreview = document.getElementById("imagePreview");
+    const uploadStatus = document.getElementById("uploadStatus");
+    const UPLOAD_HINT = "JPG, PNG, WebP or GIF, up to 5 MB.";
+    let uploading = false;
+
+    function updatePreview(url) {
+      imagePreview.src = url || "";
+      imagePreview.classList.toggle("d-none", !url);
+    }
+
+    imageFile.addEventListener("change", async () => {
+      const file = imageFile.files[0];
+      if (!file) return;
+
+      if (file.size > 5 * 1024 * 1024) {
+        showMessage("Image must be smaller than 5 MB.", "warning");
+        imageFile.value = "";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const saveButton = document.getElementById("saveProductButton");
+      uploading = true;
+      saveButton.disabled = true;
+      uploadStatus.textContent = "Uploading image...";
+
+      try {
+        const result = await api("/api/uploads/image", {
+          method: "POST",
+          body: formData
+        });
+
+        imageUrlInput.value = result.imageUrl;
+        updatePreview(result.imageUrl);
+        uploadStatus.textContent = "Image uploaded ✓";
+      } catch (error) {
+        showMessage(error.message, "danger");
+        uploadStatus.textContent = UPLOAD_HINT;
+        imageFile.value = "";
+      } finally {
+        uploading = false;
+        saveButton.disabled = false;
+      }
+    });
+
+    imageUrlInput.addEventListener("input", () => {
+      updatePreview(imageUrlInput.value.trim());
+    });
+
+    function resetProductForm() {
+      productForm.reset();
+      updatePreview("");
+      uploadStatus.textContent = UPLOAD_HINT;
+      document.getElementById("productId").value = "";
+      document.getElementById("formTitle").textContent = "Add a product";
+      document.getElementById("saveProductButton").textContent = "Add product";
+      document.getElementById("cancelEditButton").classList.add("d-none");
+      document.getElementById("activeField").classList.add("d-none");
+    }
+
+    function startEditing(product) {
+      document.getElementById("productId").value = product._id;
+      document.getElementById("name").value = product.name;
+      document.getElementById("description").value = product.description;
+      document.getElementById("category").value = product.category;
+      document.getElementById("price").value = product.price;
+      document.getElementById("stock").value = product.stock;
+      document.getElementById("imageUrl").value = product.imageUrl || "";
+      document.getElementById("isActive").checked = product.isActive;
+      imageFile.value = "";
+      updatePreview(product.imageUrl);
+
+      document.getElementById("formTitle").textContent = "Edit product";
+      document.getElementById("saveProductButton").textContent = "Save changes";
+      document.getElementById("cancelEditButton").classList.remove("d-none");
+      document.getElementById("activeField").classList.remove("d-none");
+      productForm.scrollIntoView({ behavior: "smooth" });
+    }
+
+    productForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      hideMessage();
+
+      if (uploading) {
+        showMessage("Please wait for the image to finish uploading.", "warning");
+        return;
+      }
+
+      const id = document.getElementById("productId").value;
+      const priceText = document.getElementById("price").value;
+      const stockText = document.getElementById("stock").value;
+
+      const data = {
+        name: document.getElementById("name").value.trim(),
+        description: document.getElementById("description").value.trim(),
+        category: document.getElementById("category").value.trim(),
+        imageUrl: document.getElementById("imageUrl").value.trim(),
+        price: priceText === "" ? "" : Number(priceText),
+        stock: stockText === "" ? "" : Number(stockText)
+      };
+
+      if (id) {
+        data.isActive = document.getElementById("isActive").checked;
+      }
+
+      if (!data.name || !data.description || !data.category || data.price === "") {
+        showMessage("Please fill in the name, description, category and price.", "warning");
+        return;
+      }
+
+      const saveButton = document.getElementById("saveProductButton");
+      saveButton.disabled = true;
+
+      try {
+        const result = await api(id ? "/api/products/" + id : "/api/products", {
+          method: id ? "PATCH" : "POST",
+          body: JSON.stringify(data)
+        });
+
+        showMessage(result.message, "success");
+        resetProductForm();
+        await loadProducts();
+      } catch (error) {
+        showMessage(error.message, "danger");
+      } finally {
+        saveButton.disabled = false;
+      }
+    });
+
+    document.getElementById("cancelEditButton").addEventListener("click", resetProductForm);
+
+    productRows.addEventListener("click", async event => {
+      const editButton = event.target.closest("[data-edit]");
+      const hideButton = event.target.closest("[data-deactivate]");
+      const showButton = event.target.closest("[data-activate]");
+
+      if (editButton) {
+        startEditing(products.find(p => p._id === editButton.dataset.edit));
+        return;
+      }
+
+      try {
+        if (hideButton) {
+          if (!confirm("Hide this product from the store?")) return;
+          hideButton.disabled = true;
+          await api("/api/products/" + hideButton.dataset.deactivate, { method: "DELETE" });
+          showMessage("Product hidden from the store.", "info");
+        } else if (showButton) {
+          showButton.disabled = true;
+          await api("/api/products/" + showButton.dataset.activate, {
+            method: "PATCH",
+            body: JSON.stringify({ isActive: true })
+          });
+          showMessage("Product is visible in the store again.", "success");
+        } else {
+          return;
+        }
+
+        await loadProducts();
+      } catch (error) {
+        showMessage(error.message, "danger");
+        await loadProducts();
+      }
+    });
+
+    // ---------- Orders ----------
+
+    function renderOrders() {
+      const filter = orderFilter.value;
+      const visible = orders.filter(order => !filter || order.status === filter);
+
+      if (!visible.length) {
+        orderRows.innerHTML =
+          '<tr><td colspan="6" class="text-secondary">No orders to show.</td></tr>';
+        return;
+      }
+
+      orderRows.innerHTML = visible.map(order => {
+        const customer = order.user || {};
+        const address = order.shippingAddress || {};
+        const isFinal = FINAL_STATUSES.includes(order.status);
+
+        return `
+          <tr>
+            <td class="text-nowrap">
+              <div class="fw-bold">#${escapeHtml(String(order._id).slice(-8).toUpperCase())}</div>
+              <div class="text-secondary small">${formatDate(order.createdAt)}</div>
+            </td>
+            <td>
+              <div>${escapeHtml(customer.name || "Deleted user")}</div>
+              <div class="text-secondary small">${escapeHtml(customer.email || "")}</div>
+            </td>
+            <td class="small">
+              ${order.items.map(item =>
+                `${escapeHtml(item.name)} × ${item.quantity}`
+              ).join("<br>")}
+            </td>
+            <td class="text-nowrap">
+              <div class="fw-bold">${formatPrice(order.totalAmount)}</div>
+              <div class="text-secondary small">${escapeHtml(order.paymentStatus)}</div>
+            </td>
+            <td class="small">
+              ${escapeHtml(address.fullName)}<br>
+              ${escapeHtml(address.addressLine)}, ${escapeHtml(address.city)}
+              ${escapeHtml(address.postalCode || "")}<br>
+              ${escapeHtml(address.phone)}
+            </td>
+            <td>
+              <select class="form-select form-select-sm" data-order="${escapeHtml(order._id)}"
+                      ${isFinal ? "disabled" : ""} aria-label="Order status">
+                ${STATUSES.map(status =>
+                  `<option ${status === order.status ? "selected" : ""}>${status}</option>`
+                ).join("")}
+              </select>
+            </td>
+          </tr>`;
+      }).join("");
+    }
+
+    async function loadOrders() {
+      try {
+        orders = await api("/api/orders/admin/all");
+        renderOrders();
+        renderStats();
+      } catch (error) {
+        orderRows.innerHTML = "";
+        showMessage("Could not load orders: " + error.message, "danger");
+      }
+    }
+
+    orderFilter.addEventListener("change", renderOrders);
+
+    orderRows.addEventListener("change", async event => {
+      const select = event.target.closest("[data-order]");
+      if (!select) return;
+
+      const status = select.value;
+
+      if (
+        FINAL_STATUSES.includes(status) &&
+        !confirm(`Mark this order as ${status}? This cannot be undone.`)
+      ) {
+        renderOrders();
+        return;
+      }
+
+      select.disabled = true;
+
+      try {
+        await api("/api/orders/admin/" + select.dataset.order + "/status", {
+          method: "PATCH",
+          body: JSON.stringify({ status })
+        });
+
+        showMessage("Order marked as " + status + ".", "success");
+      } catch (error) {
+        showMessage(error.message, "danger");
+      }
+
+      // Cancelling returns stock, so refresh products too
+      await Promise.all([loadOrders(), loadProducts()]);
+    });
+
+    // ---------- Customers ----------
+
+    async function loadCustomers() {
+      const rows = document.getElementById("customerRows");
+
+      try {
+        const customers = await api("/api/orders/admin/customers");
+
+        rows.innerHTML = customers.length
+          ? customers.map(customer => `
+              <tr>
+                <td>${escapeHtml(customer.name)}</td>
+                <td>${escapeHtml(customer.email)}</td>
+                <td>${escapeHtml(customer.phone || "—")}</td>
+                <td>${formatDate(customer.createdAt)}</td>
+              </tr>`
+            ).join("")
+          : '<tr><td colspan="4" class="text-secondary">No customers yet.</td></tr>';
+      } catch (error) {
+        rows.innerHTML = "";
+        showMessage("Could not load customers: " + error.message, "danger");
+      }
+    }
+
+    async function init() {
+      if (!(await initPage({ requireAdmin: true }))) return;
+
+      await Promise.all([loadProducts(), loadOrders(), loadCustomers()]);
+    }
+
+    init();
+  </script>
+</body>
+</html>

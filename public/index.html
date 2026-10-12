@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Corizo Store | Shop Smarter</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/style.css" rel="stylesheet">
+</head>
+<body>
+  <nav id="siteNav" class="navbar"></nav>
+
+  <main class="container py-4 py-lg-5">
+    <div class="hero mb-5">
+      <div class="row align-items-center">
+        <div class="col-lg-8">
+          <span class="badge bg-light text-dark mb-3">WELCOME TO CORIZO STORE</span>
+          <h1 class="display-5 fw-bold">Good products.<br>Better shopping.</h1>
+          <p class="mt-3">
+            Discover everyday essentials, explore our catalogue,
+            and enjoy a simple online shopping experience.
+          </p>
+          <a href="#products" class="btn btn-light btn-lg mt-2">Explore products</a>
+        </div>
+      </div>
+    </div>
+
+    <div id="statusMessage" class="alert" role="status"></div>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+      <div>
+        <h2 class="section-title mb-1" id="products">Our products</h2>
+        <p class="text-secondary mb-0">Find something you'll love.</p>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <input id="searchInput" class="form-control" type="search"
+               placeholder="Search products..." aria-label="Search products">
+        <select id="categoryFilter" class="form-select" aria-label="Filter category">
+          <option value="">All categories</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="productGrid" class="row g-4">
+      <div class="col-12 text-center py-5">Loading products...</div>
+    </div>
+  </main>
+
+  <footer class="py-4 mt-5">
+    <div class="container d-flex flex-wrap justify-content-between gap-2">
+      <span><strong>Corizo Store</strong> — Student e-commerce project</span>
+      <span>Built with HTML, Bootstrap, Node.js and MongoDB</span>
+    </div>
+  </footer>
+
+  <script src="/common.js"></script>
+  <script>
+    let allProducts = [];
+
+    const grid = document.getElementById("productGrid");
+    const searchInput = document.getElementById("searchInput");
+    const categoryFilter = document.getElementById("categoryFilter");
+
+    function shorten(text, length) {
+      return text.length > length ? text.slice(0, length).trim() + "…" : text;
+    }
+
+    function renderProducts() {
+      const search = searchInput.value.trim().toLowerCase();
+      const category = categoryFilter.value;
+
+      const products = allProducts.filter(product => {
+        const matchesSearch =
+          (product.name + " " + (product.description || ""))
+            .toLowerCase().includes(search);
+
+        return matchesSearch &&
+          (!category || product.category === category);
+      });
+
+      if (!products.length) {
+        grid.innerHTML = `
+          <div class="col-12 text-center py-5 text-secondary">
+            ${allProducts.length
+              ? "No products match your search."
+              : "No products available yet. Please check back soon!"}
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = products.map(product => {
+        const image = product.imageUrl || "https://placehold.co/600x600?text=Product";
+
+        return `
+          <div class="col-sm-6 col-lg-4 col-xl-3">
+            <div class="product-card d-flex flex-column">
+              <img src="${escapeHtml(image)}" alt="${escapeHtml(product.name)}"
+                   class="product-image" loading="lazy">
+              <div class="p-3 d-flex flex-column flex-grow-1">
+                <span class="category-label">${escapeHtml(product.category)}</span>
+                <h3 class="h6 fw-bold mt-1 mb-2">${escapeHtml(product.name)}</h3>
+                <p class="text-secondary small flex-grow-1">
+                  ${escapeHtml(shorten(product.description || "", 110))}
+                </p>
+                <div class="d-flex justify-content-between align-items-center gap-2">
+                  <span class="price">${formatPrice(product.price)}</span>
+                  ${product.stock > 0
+                    ? `<button class="btn btn-brand btn-sm" data-add="${escapeHtml(product._id)}">
+                         Add to cart
+                       </button>`
+                    : `<span class="badge text-bg-secondary">Out of stock</span>`}
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    async function loadProducts() {
+      try {
+        allProducts = await api("/api/products");
+
+        const categories = [...new Set(
+          allProducts.map(p => p.category).filter(Boolean)
+        )].sort();
+
+        categoryFilter.innerHTML =
+          '<option value="">All categories</option>' +
+          categories.map(category =>
+            `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`
+          ).join("");
+
+        renderProducts();
+      } catch (error) {
+        grid.innerHTML = "";
+        showMessage("Could not load products: " + error.message, "danger");
+      }
+    }
+
+    grid.addEventListener("click", async event => {
+      const button = event.target.closest("[data-add]");
+      if (!button) return;
+
+      if (!currentUser) {
+        window.location.href = "/login.html?next=" + encodeURIComponent("/#products");
+        return;
+      }
+
+      button.disabled = true;
+
+      try {
+        await api("/api/cart/items", {
+          method: "POST",
+          body: JSON.stringify({
+            productId: button.dataset.add,
+            quantity: 1
+          })
+        });
+
+        showMessage("Product added to your cart!", "success");
+        await updateCartCount();
+      } catch (error) {
+        showMessage(error.message, "danger");
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    searchInput.addEventListener("input", renderProducts);
+    categoryFilter.addEventListener("change", renderProducts);
+
+    async function init() {
+      await initPage();
+      await loadProducts();
+    }
+
+    init();
+  </script>
+</body>
+</html>

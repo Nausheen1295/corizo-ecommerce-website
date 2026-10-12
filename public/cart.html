@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Cart | Corizo Store</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/style.css" rel="stylesheet">
+</head>
+<body>
+  <nav id="siteNav" class="navbar"></nav>
+
+  <main class="container py-4 py-lg-5">
+    <h1 class="section-title mb-4">Your cart</h1>
+
+    <div id="statusMessage" class="alert" role="status"></div>
+
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div id="cartItems" class="panel">Loading your cart...</div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="panel">
+          <h2 class="h5 fw-bold mb-3">Order summary</h2>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Items</span>
+            <span id="itemCount">0</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Delivery</span>
+            <span class="text-success">Free</span>
+          </div>
+          <hr>
+          <div class="d-flex justify-content-between mb-3">
+            <strong>Total</strong>
+            <strong id="cartTotal" class="price">₹0.00</strong>
+          </div>
+          <a id="checkoutButton" href="/checkout.html" class="btn btn-brand w-100 disabled"
+             aria-disabled="true">Proceed to checkout</a>
+          <a href="/#products" class="btn btn-light w-100 mt-2">Continue shopping</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="py-4 mt-5">
+    <div class="container d-flex flex-wrap justify-content-between gap-2">
+      <span><strong>Corizo Store</strong> — Student e-commerce project</span>
+      <span>Built with HTML, Bootstrap, Node.js and MongoDB</span>
+    </div>
+  </footer>
+
+  <script src="/common.js"></script>
+  <script>
+    const cartItems = document.getElementById("cartItems");
+    const checkoutButton = document.getElementById("checkoutButton");
+
+    function renderCart(cart) {
+      const count = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+      const hasStockProblem = cart.items.some(item => item.quantity > item.stock);
+
+      document.getElementById("itemCount").textContent = count;
+      document.getElementById("cartTotal").textContent = formatPrice(cart.total);
+      const navCounter = document.getElementById("cartCount");
+      if (navCounter) navCounter.textContent = count;
+
+      const canCheckout = cart.items.length && !hasStockProblem;
+      checkoutButton.classList.toggle("disabled", !canCheckout);
+      checkoutButton.setAttribute("aria-disabled", String(!canCheckout));
+
+      if (cart.notice) {
+        showMessage(cart.notice, "warning");
+      }
+
+      if (!cart.items.length) {
+        cartItems.innerHTML = `
+          <div class="text-center py-5">
+            <p class="text-secondary">Your cart is empty.</p>
+            <a href="/#products" class="btn btn-brand">Browse products</a>
+          </div>`;
+        return;
+      }
+
+      cartItems.innerHTML = cart.items.map(item => {
+        const image = item.imageUrl || "https://placehold.co/600x600?text=Product";
+        const id = escapeHtml(item.productId);
+
+        return `
+          <div class="d-flex flex-wrap align-items-center gap-3 py-3 border-bottom">
+            <img src="${escapeHtml(image)}" alt="" class="cart-thumb">
+            <div class="flex-grow-1">
+              <div class="fw-bold">${escapeHtml(item.name)}</div>
+              <div class="text-secondary small">${formatPrice(item.price)} each</div>
+              ${item.quantity > item.stock
+                ? `<div class="text-danger small">
+                     Only ${item.stock} left in stock — please lower the quantity.
+                   </div>`
+                : ""}
+            </div>
+            <input type="number" class="form-control qty-input" min="1"
+                   max="${item.stock}" value="${item.quantity}"
+                   data-quantity="${id}" aria-label="Quantity">
+            <div class="fw-bold text-end" style="min-width: 90px">
+              ${formatPrice(item.subtotal)}
+            </div>
+            <button class="btn btn-sm btn-outline-danger" data-remove="${id}">Remove</button>
+          </div>`;
+      }).join("");
+    }
+
+    async function loadCart() {
+      try {
+        renderCart(await api("/api/cart"));
+      } catch (error) {
+        cartItems.textContent = "";
+        showMessage("Could not load your cart: " + error.message, "danger");
+      }
+    }
+
+    cartItems.addEventListener("change", async event => {
+      const input = event.target.closest("[data-quantity]");
+      if (!input) return;
+
+      input.disabled = true;
+
+      try {
+        const cart = await api("/api/cart/items/" + input.dataset.quantity, {
+          method: "PATCH",
+          body: JSON.stringify({ quantity: Number(input.value) })
+        });
+
+        hideMessage();
+        renderCart(cart);
+      } catch (error) {
+        showMessage(error.message, "danger");
+        await loadCart();
+      }
+    });
+
+    cartItems.addEventListener("click", async event => {
+      const button = event.target.closest("[data-remove]");
+      if (!button) return;
+
+      button.disabled = true;
+
+      try {
+        const cart = await api("/api/cart/items/" + button.dataset.remove, {
+          method: "DELETE"
+        });
+
+        showMessage("Item removed from your cart.", "info");
+        renderCart(cart);
+      } catch (error) {
+        showMessage(error.message, "danger");
+        button.disabled = false;
+      }
+    });
+
+    async function init() {
+      if (await initPage({ requireLogin: true })) {
+        await loadCart();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
