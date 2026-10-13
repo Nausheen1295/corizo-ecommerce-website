@@ -38,6 +38,13 @@
         <select id="categoryFilter" class="form-select" aria-label="Filter category">
           <option value="">All categories</option>
         </select>
+        <select id="sortBy" class="form-select w-auto" aria-label="Sort products">
+          <option value="newest">Sort: Newest</option>
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+          <option value="name-asc">Name: A to Z</option>
+          <option value="name-desc">Name: Z to A</option>
+        </select>
       </div>
     </div>
 
@@ -60,6 +67,15 @@
     const grid = document.getElementById("productGrid");
     const searchInput = document.getElementById("searchInput");
     const categoryFilter = document.getElementById("categoryFilter");
+    const sortBy = document.getElementById("sortBy");
+
+    const SORTERS = {
+      "newest": (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+      "price-asc": (a, b) => a.price - b.price,
+      "price-desc": (a, b) => b.price - a.price,
+      "name-asc": (a, b) => a.name.localeCompare(b.name),
+      "name-desc": (a, b) => b.name.localeCompare(a.name)
+    };
 
     function shorten(text, length) {
       return text.length > length ? text.slice(0, length).trim() + "…" : text;
@@ -76,7 +92,7 @@
 
         return matchesSearch &&
           (!category || product.category === category);
-      });
+      }).sort(SORTERS[sortBy.value] || SORTERS.newest);
 
       if (!products.length) {
         grid.innerHTML = `
@@ -168,6 +184,7 @@
 
     searchInput.addEventListener("input", renderProducts);
     categoryFilter.addEventListener("change", renderProducts);
+    sortBy.addEventListener("change", renderProducts);
 
     async function init() {
       await initPage();
