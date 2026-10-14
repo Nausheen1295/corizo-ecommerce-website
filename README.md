@@ -73,4 +73,4 @@ products, stock, orders and customers from a dashboard.
 
 ---
 
-Student e-commerce project.
+Nausheen's e-commerce project, built with HTML, Bootstrap, Node.js and MongoDB.
